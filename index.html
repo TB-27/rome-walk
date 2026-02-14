@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Rome Walking Tour - Feb 15</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol@0.85.1/dist/L.Control.Locate.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<style>
+:root {
+  --bg: #0f1118;
+  --card: #181c28;
+  --card-alt: #1e2233;
+  --border: #252a3a;
+  --accent: #e8564a;
+  --accent-soft: rgba(232,86,74,0.15);
+  --blue: #4a9eff;
+  --green: #5cd47a;
+  --yellow: #f5c842;
+  --orange: #f5a623;
+  --text: #eceef4;
+  --text2: #a0a5b8;
+  --text3: #6b7088;
+  --optional: #6b7394;
+  --radius: 14px;
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height:100%; overflow:hidden; font-family:var(--font); background:var(--bg); color:var(--text); }
+
+.app { display:flex; flex-direction:column; height:100%; height:100dvh; }
+
+/* === MAP === */
+#map { flex:0 0 48%; min-height:220px; z-index:1; }
+
+/* Leaflet overrides */
+.leaflet-div-icon { background:transparent; border:none; }
+.mpin {
+  width:36px; height:36px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:15px; color:#fff;
+  border:3px solid #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,0,0,0.1);
+  font-family:var(--font);
+  transition: transform 0.2s;
+}
+.mpin.main { background:var(--accent); }
+.mpin.opt  { background:var(--optional); }
+.mpin.active { transform:scale(1.3); box-shadow: 0 0 0 4px var(--accent-soft), 0 2px 8px rgba(0,0,0,0.4); }
+
+/* Popups */
+.tp .leaflet-popup-content-wrapper {
+  border-radius:var(--radius); padding:0; box-shadow:0 8px 30px rgba(0,0,0,0.3);
+  background:#fff; overflow:hidden;
+}
+.tp .leaflet-popup-content { margin:0; font-family:var(--font); }
+.tp .leaflet-popup-tip { box-shadow:0 4px 12px rgba(0,0,0,0.1); }
+.pc { padding:14px 16px; }
+.pc-top { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+.pc-n { background:var(--accent); color:#fff; width:24px; height:24px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; flex-shrink:0; }
+.pc-name { font-size:16px; font-weight:700; color:#1a1a2e; }
+.pc-meta { font-size:13px; color:#888; margin-bottom:8px; }
+.pc-note { font-size:14px; color:#444; margin-bottom:12px; line-height:1.45; }
+.pc-nav { display:flex; gap:10px; padding-top:10px; border-top:1px solid #eee; }
+.pc-nav a {
+  flex:1; text-align:center; padding:10px 0; border-radius:8px;
+  font-size:13px; font-weight:700; text-decoration:none;
+  min-height:44px; display:flex; align-items:center; justify-content:center; gap:6px;
+}
+.pc-nav .apple { background:#000; color:#fff; }
+.pc-nav .google { background:#4285f4; color:#fff; }
+
+/* === BOTTOM PANEL === */
+.panel {
+  flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;
+  background:var(--bg);
+}
+
+/* Weather bar */
+.wx {
+  display:flex; align-items:center; gap:12px;
+  padding:12px 20px;
+  background: linear-gradient(135deg, #1a2540, #1e2848);
+  border-bottom:1px solid var(--border);
+  font-size:13px; color:var(--text2);
+  position:sticky; top:0; z-index:5;
+  backdrop-filter: blur(10px);
+}
+.wx-icon { font-size:22px; }
+.wx-temp { font-size:17px; font-weight:700; color:var(--text); }
+.wx-detail { display:flex; gap:12px; flex-wrap:wrap; }
+
+/* Section header */
+.shdr {
+  padding:14px 20px 8px; font-size:11px; font-weight:700;
+  text-transform:uppercase; letter-spacing:0.12em; color:var(--text3);
+  position:sticky; top:50px; z-index:4; background:var(--bg);
+}
+
+/* Stop cards */
+.stop {
+  display:flex; gap:14px; padding:14px 20px;
+  border-bottom:1px solid var(--border);
+  cursor:pointer; transition:background 0.15s;
+  position:relative;
+}
+.stop:active { background:var(--card-alt); }
+.stop.active { background:var(--card); }
+.stop.active::before {
+  content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+  background:var(--accent); border-radius:0 3px 3px 0;
+}
+.stop.opt .sname { color:var(--optional); }
+
+/* Timeline connector */
+.stop-left { display:flex; flex-direction:column; align-items:center; gap:4px; }
+.snum {
+  width:32px; height:32px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:14px; color:#fff; flex-shrink:0;
+}
+.snum.main { background:var(--accent); }
+.snum.opt  { background:var(--optional); }
+.sline { width:2px; flex:1; min-height:16px; background:var(--border); border-radius:1px; }
+
+.sinfo { flex:1; min-width:0; }
+.sname { font-size:15px; font-weight:700; color:var(--text); margin-bottom:3px; }
+.smeta { font-size:13px; color:var(--text3); display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+.smeta .tm { color:var(--blue); font-weight:700; }
+.smeta .cost { color:var(--green); font-weight:600; }
+.snote { font-size:13px; color:var(--text2); margin-top:5px; line-height:1.4; }
+
+/* Badges */
+.badge {
+  font-size:11px; font-weight:700; padding:2px 8px; border-radius:6px;
+  text-transform:uppercase; letter-spacing:0.04em;
+}
+.badge-booked { background:rgba(92,212,122,0.15); color:var(--green); border:1px solid rgba(92,212,122,0.3); }
+.badge-lunch  { background:rgba(245,166,35,0.15); color:var(--orange); border:1px solid rgba(245,166,35,0.3); }
+.badge-opt    { background:rgba(107,115,148,0.12); color:var(--optional); border:1px solid rgba(107,115,148,0.25); }
+.badge-end    { background:rgba(74,158,255,0.12); color:var(--blue); border:1px solid rgba(74,158,255,0.25); }
+
+/* Navigate buttons row */
+.nav-row {
+  display:flex; gap:8px; margin-top:8px;
+}
+.nav-btn {
+  flex:1; padding:8px 0; border-radius:8px; font-size:12px; font-weight:700;
+  text-decoration:none; text-align:center; min-height:36px;
+  display:flex; align-items:center; justify-content:center; gap:4px;
+}
+.nav-btn.apple { background:#000; color:#fff; }
+.nav-btn.google { background:#4285f4; color:#fff; }
+
+/* Tips section */
+.tips { padding:16px 20px; }
+.tip-card {
+  display:flex; gap:12px; padding:12px 14px; margin-bottom:8px;
+  background:var(--card); border-radius:10px; border:1px solid var(--border);
+  align-items:flex-start;
+}
+.tip-icon { font-size:18px; flex-shrink:0; margin-top:1px; }
+.tip-label { font-size:13px; font-weight:700; margin-bottom:2px; }
+.tip-text { font-size:13px; color:var(--text2); line-height:1.4; }
+
+/* Footer */
+.footer {
+  padding:12px 20px 24px; text-align:center;
+  font-size:12px; color:var(--text3); border-top:1px solid var(--border);
+}
+
+/* Expand/collapse for stop details */
+.stop-expand { display:none; }
+.stop.expanded .stop-expand { display:block; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div id="map"></div>
+  <div class="panel" id="panel"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol@0.85.1/dist/L.Control.Locate.min.js"></script>
+<script>
+// ============================================================
+// ROME WALKING TOUR DATA
+// ============================================================
+const STOPS = [
+  {
+    n:1, name:"Trevi Fountain", lat:41.9009, lng:12.4833,
+    time:"10:00", dur:"20 min", cost:"€2/pp",
+    badge:"booked", badgeText:"BOOKED",
+    notes:"Tickets pre-booked! Enter from Via delle Muratte side. Best photos from the right side looking at the fountain.",
+    opt:false
+  },
+  {
+    n:2, name:"Galleria Sciarra", lat:41.8990, lng:12.4842,
+    time:"10:25", dur:"5 min", cost:"Free",
+    notes:"Hidden Art Nouveau gem -- walk through the courtyard. Beautiful frescoes on the walls. Easy to miss the entrance.",
+    opt:false
+  },
+  {
+    n:3, name:"Spanish Steps", lat:41.9059, lng:12.4824,
+    time:"10:40", dur:"15 min", cost:"Free",
+    notes:"View from the bottom is best. Can't sit on the steps (it's illegal!). Keats-Shelley House is at the bottom right.",
+    opt:false
+  },
+  {
+    n:4, name:"Palazzo Barberini", lat:41.9035, lng:12.4897,
+    time:"11:00", dur:"45 min", cost:"€12/pp",
+    badge:"opt", badgeText:"OPTIONAL",
+    notes:"National Gallery of Ancient Art. Raphael & Caravaggio. Skip if short on time -- nearest metro: Barberini.",
+    opt:true
+  },
+  {
+    n:5, name:"Pantheon", lat:41.8986, lng:12.4769,
+    time:"11:15", dur:"30 min", cost:"€5/pp",
+    notes:"Book tickets if you haven't! The oculus (hole in the dome) is 9m wide. Free for under-18s. Raphael's tomb is inside.",
+    opt:false
+  },
+  {
+    n:6, name:"Piazza Navona", lat:41.8992, lng:12.4731,
+    time:"12:00", dur:"20 min", cost:"Free",
+    notes:"Three fountains, street artists. Flat & spacious -- great for stroller. Bernini's Fountain of the Four Rivers in the centre.",
+    opt:false
+  },
+  {
+    n:7, name:"Campo de' Fiori", lat:41.8956, lng:12.4722,
+    time:"12:30", dur:"45 min", cost:"Free",
+    badge:"lunch", badgeText:"LUNCH",
+    notes:"Morning market (until ~14:00). Great lunch spots on side streets -- try Roscioli or Forno Campo de' Fiori for pizza al taglio.",
+    opt:false
+  },
+  {
+    n:8, name:"Galleria Doria Pamphilj", lat:41.8978, lng:12.4810,
+    time:"13:15", dur:"45 min", cost:"€14/pp",
+    badge:"opt", badgeText:"OPTIONAL",
+    notes:"Stunning private palace gallery. Velazquez's Pope Innocent X is here. Audio guide included. Skip if tired.",
+    opt:true
+  },
+  {
+    n:9, name:"Piazza Venezia", lat:41.8958, lng:12.4823,
+    time:"13:30", dur:"20 min", cost:"Free",
+    badge:"end", badgeText:"FINISH",
+    notes:"Vittoriano monument has free entry + paid roof terrace with panoramic views (€12). Great way to end the walk!",
+    opt:false
+  }
+];
+
+// ============================================================
+// MAP SETUP
+// ============================================================
+const map = L.map('map', { zoomControl:false, tap:true });
+
+// CartoDB Voyager tiles - clean and modern
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+  attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+  subdomains:'abcd', maxZoom:19
+}).addTo(map);
+
+L.control.zoom({ position:'topright' }).addTo(map);
+L.control.locate({
+  position:'topright', flyTo:true,
+  keepCurrentZoomLevel:false,
+  icon:'fa fa-location-crosshairs',
+  locateOptions:{ enableHighAccuracy:true }
+}).addTo(map);
+
+// ============================================================
+// MARKERS + ROUTE
+// ============================================================
+const markers = [];
+const coords = [];
+const pinEls = [];
+
+function popupHtml(s) {
+  const gUrl = `https://www.google.com/maps/dir/?api=1&destination=${s.lat}%2C${s.lng}&travelmode=walking`;
+  const aUrl = `https://maps.apple.com/?daddr=${s.lat},${s.lng}&dirflg=w`;
+  return `<div class="pc">
+    <div class="pc-top"><span class="pc-n">${s.n}</span><span class="pc-name">${s.name}</span></div>
+    <div class="pc-meta">${s.time} &middot; ${s.dur}${s.cost!=='Free'?' &middot; '+s.cost:''}</div>
+    <p class="pc-note">${s.notes}</p>
+    <div class="pc-nav">
+      <a class="apple" href="${aUrl}" target="_blank">Apple Maps</a>
+      <a class="google" href="${gUrl}" target="_blank">Google Maps</a>
+    </div>
+  </div>`;
+}
+
+STOPS.forEach((s, i) => {
+  const ll = [s.lat, s.lng];
+  coords.push(ll);
+  const icon = L.divIcon({
+    className:'leaflet-div-icon',
+    html:`<div class="mpin ${s.opt?'opt':'main'}" id="pin-${i}">${s.n}</div>`,
+    iconSize:[36,36], iconAnchor:[18,18], popupAnchor:[0,-22]
+  });
+  const m = L.marker(ll, {icon}).bindPopup(popupHtml(s), {
+    maxWidth:300, minWidth:220, className:'tp'
+  }).addTo(map);
+  markers.push(m);
+});
+
+// Orange route line
+L.polyline(coords, {
+  color:'#f5a623', weight:4, opacity:0.8,
+  dashArray:'8,6', lineJoin:'round', lineCap:'round'
+}).addTo(map);
+
+map.fitBounds(L.latLngBounds(coords), { padding:[40,40] });
+
+// ============================================================
+// BOTTOM PANEL
+// ============================================================
+function renderPanel() {
+  const p = document.getElementById('panel');
+  let h = '';
+
+  // Weather bar
+  h += `<div class="wx">
+    <span class="wx-icon">&#9925;</span>
+    <span class="wx-temp">16&deg; / 5&deg;C</span>
+    <div class="wx-detail">
+      <span>Breaks of sun</span>
+      <span>&middot; 5% rain</span>
+      <span>&middot; Wind 7 km/h</span>
+    </div>
+  </div>`;
+
+  // Schedule header
+  h += '<div class="shdr">Schedule &middot; 9 stops &middot; ~3.5 hrs</div>';
+
+  // Stop cards
+  STOPS.forEach((s, i) => {
+    const gUrl = `https://www.google.com/maps/dir/?api=1&destination=${s.lat}%2C${s.lng}&travelmode=walking`;
+    const aUrl = `https://maps.apple.com/?daddr=${s.lat},${s.lng}&dirflg=w`;
+    const isLast = i === STOPS.length - 1;
+
+    h += `<div class="stop${s.opt?' opt':''}" data-i="${i}" onclick="go(${i})">
+      <div class="stop-left">
+        <div class="snum ${s.opt?'opt':'main'}">${s.n}</div>
+        ${!isLast ? '<div class="sline"></div>' : ''}
+      </div>
+      <div class="sinfo">
+        <div class="sname">${s.name}</div>
+        <div class="smeta">
+          <span class="tm">${s.time}</span>
+          <span>&middot;</span>
+          <span>${s.dur}</span>
+          ${s.cost!=='Free'?`<span>&middot;</span><span class="cost">${s.cost}</span>`:''}
+          ${s.badge?`<span class="badge badge-${s.badge}">${s.badgeText}</span>`:''}
+        </div>
+        <div class="snote">${s.notes}</div>
+        <div class="stop-expand">
+          <div class="nav-row">
+            <a class="nav-btn apple" href="${aUrl}" target="_blank" onclick="event.stopPropagation()">Apple Maps</a>
+            <a class="nav-btn google" href="${gUrl}" target="_blank" onclick="event.stopPropagation()">Google Maps</a>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  // Tips
+  h += `<div class="tips">
+    <div class="tip-card">
+      <span class="tip-icon">&#127829;</span>
+      <div><div class="tip-label" style="color:var(--orange)">Lunch</div>
+      <div class="tip-text">Campo de' Fiori market area or Piazza Navona side streets. Try Roscioli for sit-down or Forno for quick pizza.</div></div>
+    </div>
+    <div class="tip-card">
+      <span class="tip-icon">&#128118;</span>
+      <div><div class="tip-label" style="color:var(--accent)">Baby-friendly</div>
+      <div class="tip-text">Piazza Navona is flat & spacious for stroller breaks. Pantheon has smooth floors inside. Skip Barberini if baby is fussy.</div></div>
+    </div>
+    <div class="tip-card">
+      <span class="tip-icon">&#128647;</span>
+      <div><div class="tip-label" style="color:var(--blue)">Metro stations</div>
+      <div class="tip-text">Barberini (near stop 4) or Spagna (near stop 3) -- both Line A. Useful if you need to bail early or rejoin.</div></div>
+    </div>
+    <div class="tip-card">
+      <span class="tip-icon">&#128176;</span>
+      <div><div class="tip-label" style="color:var(--green)">Budget (5 adults)</div>
+      <div class="tip-text">Must-sees only: ~€35 total. All paid stops including optionals: ~€165 total. Baby free everywhere.</div></div>
+    </div>
+  </div>`;
+
+  // Footer
+  h += `<div class="footer">5 adults + 1 baby &middot; Sat 15 Feb 2026 &middot; Trevi tickets pre-booked<br>
+  <span style="opacity:0.5;font-size:11px">Tap any stop to see it on the map. Navigate buttons open your maps app.</span></div>`;
+
+  p.innerHTML = h;
+}
+
+// ============================================================
+// INTERACTION
+// ============================================================
+let activeStop = -1;
+
+function go(i) {
+  const s = STOPS[i];
+
+  // Fly map to stop
+  map.flyTo([s.lat, s.lng], 17, { duration:0.6 });
+  markers[i].openPopup();
+
+  // Highlight card
+  document.querySelectorAll('.stop').forEach(c => {
+    c.classList.remove('active','expanded');
+  });
+  const card = document.querySelector(`.stop[data-i="${i}"]`);
+  if (card) {
+    card.classList.add('active','expanded');
+    // Scroll card into view
+    setTimeout(() => card.scrollIntoView({ behavior:'smooth', block:'nearest' }), 100);
+  }
+
+  // Highlight pin
+  document.querySelectorAll('.mpin').forEach(p => p.classList.remove('active'));
+  const pin = document.getElementById(`pin-${i}`);
+  if (pin) pin.classList.add('active');
+
+  activeStop = i;
+}
+
+renderPanel();
+</script>
+</body>
+</html>
