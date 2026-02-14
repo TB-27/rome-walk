@@ -271,6 +271,10 @@ html, body { height:100%; overflow:hidden; font-family:var(--font); background:v
 .badge-michelin { background:rgba(196,54,46,0.15); color:#e85b52; border:1px solid rgba(196,54,46,0.3); }
 .badge-seafood { background:rgba(74,158,255,0.12); color:var(--blue); border:1px solid rgba(74,158,255,0.25); }
 .badge-wine { background:rgba(160,100,200,0.12); color:#b580d4; border:1px solid rgba(160,100,200,0.25); }
+.badge-roman { background:rgba(245,166,35,0.12); color:var(--orange); border:1px solid rgba(245,166,35,0.25); }
+.badge-modern { background:rgba(92,212,122,0.12); color:var(--green); border:1px solid rgba(92,212,122,0.25); }
+.badge-deli { background:rgba(245,200,66,0.12); color:#e8c43a; border:1px solid rgba(245,200,66,0.25); }
+.badge-market { background:rgba(245,200,66,0.12); color:#e8c43a; border:1px solid rgba(245,200,66,0.25); }
 </style>
 </head>
 <body>
@@ -343,25 +347,25 @@ const STOPS = [
 
 const RESTAURANTS = [
   // Centro Storico
-  { name:"Ristorante Grano", lat:41.8999, lng:12.4757, area:"Centro Storico", addr:"Piazza Rondanini 53", tag:"", note:"Near Pantheon" },
-  { name:"Roscioli", lat:41.8943, lng:12.4742, area:"Centro Storico", addr:"Via dei Giubbonari 21", tag:"", note:"Famous salumeria with kitchen. Book ahead." },
+  { name:"Ristorante Grano", lat:41.8999, lng:12.4757, area:"Centro Storico", addr:"Piazza Rondanini 53", tag:"roman", note:"Near Pantheon" },
+  { name:"Roscioli", lat:41.8943, lng:12.4742, area:"Centro Storico", addr:"Via dei Giubbonari 21", tag:"deli", note:"Famous salumeria with kitchen. Book ahead." },
   { name:"Il SanLorenzo", lat:41.8953, lng:12.4742, area:"Centro Storico", addr:"Via dei Chiavari 4/5", tag:"seafood", note:"Upscale seafood. MICHELIN Guide listed." },
   { name:"Casa Bleve", lat:41.8976, lng:12.4751, area:"Centro Storico", addr:"Via del Teatro Valle 48", tag:"wine", note:"Wine bar & restaurant. Great wine list." },
-  { name:"Osteria La Quercia", lat:41.8945, lng:12.4717, area:"Centro Storico", addr:"Piazza della Quercia 23", tag:"", note:"Near Campo de' Fiori" },
-  { name:"Osteria delle Coppelle", lat:41.9009, lng:12.4760, area:"Centro Storico", addr:"Piazza delle Coppelle 54", tag:"", note:"Near Pantheon" },
-  { name:"Retrobottega", lat:41.9019, lng:12.4752, area:"Centro Storico", addr:"Via della Stelletta 4", tag:"", note:"Modern Italian, open kitchen" },
-  { name:"Hostaria da Pietro", lat:41.9084, lng:12.4782, area:"Centro Storico", addr:"Via Gesù e Maria 18", tag:"", note:"Near Piazza del Popolo / Via del Corso" },
+  { name:"Osteria La Quercia", lat:41.8945, lng:12.4717, area:"Centro Storico", addr:"Piazza della Quercia 23", tag:"roman", note:"Near Campo de' Fiori" },
+  { name:"Osteria delle Coppelle", lat:41.9009, lng:12.4760, area:"Centro Storico", addr:"Piazza delle Coppelle 54", tag:"roman", note:"Near Pantheon" },
+  { name:"Retrobottega", lat:41.9019, lng:12.4752, area:"Centro Storico", addr:"Via della Stelletta 4", tag:"modern", note:"Modern Italian, open kitchen" },
+  { name:"Hostaria da Pietro", lat:41.9084, lng:12.4782, area:"Centro Storico", addr:"Via Gesù e Maria 18", tag:"roman", note:"Near Piazza del Popolo / Via del Corso" },
   { name:"Per Me Giulio Terrinoni", lat:41.8973, lng:12.4674, area:"Centro Storico", addr:"Vicolo del Malpasso 9", tag:"michelin", note:"Michelin star. Book well ahead." },
   // Trastevere
-  { name:"Da Teo", lat:41.8885, lng:12.4776, area:"Trastevere", addr:"Piazza dei Ponziani 7A", tag:"", note:"Classic Roman trattoria" },
+  { name:"Da Teo", lat:41.8885, lng:12.4776, area:"Trastevere", addr:"Piazza dei Ponziani 7A", tag:"roman", note:"Classic Roman trattoria" },
   { name:"Zia Restaurant", lat:41.8870, lng:12.4681, area:"Trastevere", addr:"Via Goffredo Mameli 45", tag:"michelin", note:"Michelin star. Creative Italian." },
   // Testaccio / Ostiense
-  { name:"Flavio al Velavevodetto", lat:41.8764, lng:12.4760, area:"Testaccio", addr:"Via di Monte Testaccio 97", tag:"", note:"Classic Roman. Built into Monte Testaccio." },
-  { name:"Trattoria Pennestri", lat:41.8733, lng:12.4799, area:"Ostiense", addr:"Via Giovanni da Empoli 5", tag:"", note:"Modern Roman" },
-  { name:"Trecca", lat:41.8535, lng:12.4868, area:"Ostiense", addr:"Via Alessandro Severo 222", tag:"", note:"Market-style cuisine" },
+  { name:"Flavio al Velavevodetto", lat:41.8764, lng:12.4760, area:"Testaccio", addr:"Via di Monte Testaccio 97", tag:"roman", note:"Classic Roman. Built into Monte Testaccio." },
+  { name:"Trattoria Pennestri", lat:41.8733, lng:12.4799, area:"Ostiense", addr:"Via Giovanni da Empoli 5", tag:"modern", note:"Modern Roman" },
+  { name:"Trecca", lat:41.8535, lng:12.4868, area:"Ostiense", addr:"Via Alessandro Severo 222", tag:"market", note:"Market-style cuisine" },
   // Other
-  { name:"Da Roberto e Loretta", lat:41.8790, lng:12.5058, area:"Esquilino", addr:"Via Saturnia 18-24", tag:"", note:"Traditional Roman trattoria" },
-  { name:"Santo Palato", lat:41.8815, lng:12.5015, area:"San Giovanni", addr:"Via Gallia 28", tag:"", note:"Chef Sarah Cicolini. Offal & Roman classics." }
+  { name:"Da Roberto e Loretta", lat:41.8790, lng:12.5058, area:"Esquilino", addr:"Via Saturnia 18-24", tag:"roman", note:"Traditional Roman trattoria" },
+  { name:"Santo Palato", lat:41.8815, lng:12.5015, area:"San Giovanni", addr:"Via Gallia 28", tag:"roman", note:"Chef Sarah Cicolini. Offal & Roman classics." }
 ];
 
 const AREA_ORDER = ["Centro Storico","Trastevere","Testaccio","Ostiense","Esquilino","San Giovanni"];
@@ -431,14 +435,21 @@ L.polyline(coords, {
 const routeBounds = L.latLngBounds(coords);
 map.fitBounds(routeBounds, { padding:[40,40] });
 
+// Tag badge helper
+const TAG_LABELS = {
+  michelin:'MICHELIN &#9733;', seafood:'SEAFOOD', wine:'WINE BAR',
+  roman:'ROMAN', modern:'MODERN', deli:'DELI', market:'MARKET'
+};
+function tagBadge(tag) {
+  if (!tag || !TAG_LABELS[tag]) return '';
+  return `<span class="badge badge-${tag}">${TAG_LABELS[tag]}</span> `;
+}
+
 // Restaurant markers
 function restPopupHtml(r) {
   const gUrl = `https://www.google.com/maps/dir/?api=1&destination=${r.lat}%2C${r.lng}&travelmode=walking`;
   const aUrl = `https://maps.apple.com/?daddr=${r.lat},${r.lng}&dirflg=w`;
-  let badges = '';
-  if (r.tag==='michelin') badges = '<span class="badge badge-michelin">MICHELIN &#9733;</span> ';
-  if (r.tag==='seafood') badges = '<span class="badge badge-seafood">SEAFOOD</span> ';
-  if (r.tag==='wine') badges = '<span class="badge badge-wine">WINE BAR</span> ';
+  const badges = tagBadge(r.tag);
   return `<div class="pc">
     <div class="pc-top"><span class="pc-name">${r.name}</span></div>
     <div class="pc-meta">${badges}${r.area} &middot; ${r.addr}</div>
@@ -647,10 +658,7 @@ function renderRestContent() {
     }
     const gUrl = `https://www.google.com/maps/dir/?api=1&destination=${r.lat}%2C${r.lng}&travelmode=walking`;
     const aUrl = `https://maps.apple.com/?daddr=${r.lat},${r.lng}&dirflg=w`;
-    let badges = '';
-    if (r.tag==='michelin') badges = '<span class="badge badge-michelin">MICHELIN &#9733;</span>';
-    if (r.tag==='seafood') badges = '<span class="badge badge-seafood">SEAFOOD</span>';
-    if (r.tag==='wine') badges = '<span class="badge badge-wine">WINE BAR</span>';
+    const badges = tagBadge(r.tag);
 
     h += `<div class="rest" data-ri="${i}" onclick="goRest(${i})">
       <div class="rnum${r.tag==='michelin'?' michelin':''}">${i+1}</div>
