@@ -275,6 +275,23 @@ html, body { height:100%; overflow:hidden; font-family:var(--font); background:v
 .badge-modern { background:rgba(92,212,122,0.12); color:var(--green); border:1px solid rgba(92,212,122,0.25); }
 .badge-deli { background:rgba(245,200,66,0.12); color:#e8c43a; border:1px solid rgba(245,200,66,0.25); }
 .badge-market { background:rgba(245,200,66,0.12); color:#e8c43a; border:1px solid rgba(245,200,66,0.25); }
+
+/* Filter bar */
+.filter-bar {
+  display:flex; gap:6px; padding:8px 20px; flex-wrap:wrap;
+  border-bottom:1px solid var(--border);
+}
+.filter-chip {
+  font-size:11px; font-weight:700; padding:5px 10px; border-radius:20px;
+  cursor:pointer; transition:all 0.15s; border:1px solid var(--border);
+  background:var(--card); color:var(--text2); font-family:var(--font);
+  text-transform:uppercase; letter-spacing:0.04em;
+}
+.filter-chip:active { opacity:0.7; }
+.filter-chip.on { background:var(--accent); color:#fff; border-color:var(--accent); }
+.badge.clickable { cursor:pointer; }
+.badge.clickable:active { opacity:0.7; }
+.rest.dimmed { opacity:0.3; }
 </style>
 </head>
 <body>
@@ -398,6 +415,7 @@ const routeLayer = L.layerGroup().addTo(map);
 const restLayer = L.layerGroup();
 const restMarkers = [];
 let activeTab = 'route';
+let activeFilter = null;
 
 function popupHtml(s) {
   const gUrl = `https://www.google.com/maps/dir/?api=1&destination=${s.lat}%2C${s.lng}&travelmode=walking`;
@@ -647,23 +665,38 @@ function renderRouteContent() {
 function renderRestContent() {
   let h = '';
 
-  h += '<div class="shdr">Restaurant Recommendations &middot; ' + RESTAURANTS.length + ' places</div>';
+  const filtered = RESTAURANTS.filter(r => !activeFilter || r.tag === activeFilter);
+  const countText = activeFilter ? filtered.length + '/' + RESTAURANTS.length : RESTAURANTS.length;
+  h += '<div class="shdr">Restaurant Recommendations &middot; ' + countText + ' places</div>';
+
+  // Filter chips
+  const tags = [...new Set(RESTAURANTS.map(r => r.tag))];
+  h += '<div class="filter-bar">';
+  tags.forEach(t => {
+    h += `<button class="filter-chip${activeFilter===t?' on':''}" onclick="filterTag('${t}')">${TAG_LABELS[t]}</button>`;
+  });
+  if (activeFilter) {
+    h += `<button class="filter-chip" onclick="filterTag(null)" style="color:var(--accent)">&#10005; Clear</button>`;
+  }
+  h += '</div>';
 
   // Group by area
   let lastArea = '';
   RESTAURANTS.forEach((r, i) => {
-    if (r.area !== lastArea) {
+    const show = !activeFilter || r.tag === activeFilter;
+    if (show && r.area !== lastArea) {
       h += `<div class="rest-group-hdr">${r.area}</div>`;
       lastArea = r.area;
     }
+    if (!show) return;
     const gUrl = `https://www.google.com/maps/dir/?api=1&destination=${r.lat}%2C${r.lng}&travelmode=walking`;
     const aUrl = `https://maps.apple.com/?daddr=${r.lat},${r.lng}&dirflg=w`;
-    const badges = tagBadge(r.tag);
+    const badgeHtml = `<span class="badge badge-${r.tag} clickable" onclick="event.stopPropagation();filterTag('${r.tag}')">${TAG_LABELS[r.tag]}</span>`;
 
     h += `<div class="rest" data-ri="${i}" onclick="goRest(${i})">
       <div class="rnum${r.tag==='michelin'?' michelin':''}">${i+1}</div>
       <div class="rinfo">
-        <div class="rname">${r.name} ${badges}</div>
+        <div class="rname">${r.name} ${badgeHtml}</div>
         <div class="raddr">${r.addr}</div>
         ${r.note ? `<div class="rnote">${r.note}</div>` : ''}
         <div class="rest-expand">
@@ -687,6 +720,7 @@ let activeStop = -1;
 function switchTab(tab) {
   if (tab === activeTab) return;
   activeTab = tab;
+  activeFilter = null;
   if (tab === 'route') {
     map.removeLayer(restLayer);
     routeLayer.addTo(map);
@@ -694,6 +728,25 @@ function switchTab(tab) {
   } else {
     map.removeLayer(routeLayer);
     restLayer.addTo(map);
+    map.fitBounds(restBounds, { padding:[40,40] });
+  }
+  map.closePopup();
+  renderPanel();
+}
+
+function filterTag(tag) {
+  activeFilter = (activeFilter === tag) ? null : tag;
+  // Update map markers visibility
+  RESTAURANTS.forEach((r, i) => {
+    const show = !activeFilter || r.tag === activeFilter;
+    if (show) { restMarkers[i].addTo(restLayer); }
+    else { restLayer.removeLayer(restMarkers[i]); }
+  });
+  // Fit map to visible markers
+  if (activeFilter) {
+    const vis = RESTAURANTS.filter(r => r.tag === activeFilter).map(r => [r.lat, r.lng]);
+    if (vis.length) map.fitBounds(L.latLngBounds(vis), { padding:[50,50] });
+  } else {
     map.fitBounds(restBounds, { padding:[40,40] });
   }
   map.closePopup();
