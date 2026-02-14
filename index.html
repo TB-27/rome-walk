@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Rome Walking Tour - Feb 15</title>
+<title>Rome Trip Guide - Feb 15–21</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol@0.85.1/dist/L.Control.Locate.min.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
@@ -349,6 +349,55 @@ html, body { height:100%; overflow:hidden; font-family:var(--font); background:v
 .badge.clickable:active { opacity:0.7; }
 .rest.dimmed { opacity:0.3; }
 
+/* Near Me button */
+.nearme-bar {
+  display:flex; gap:8px; padding:8px 20px; align-items:center;
+}
+.nearme-btn {
+  display:flex; align-items:center; gap:6px; padding:8px 16px;
+  border-radius:20px; font-size:13px; font-weight:700;
+  cursor:pointer; border:1px solid var(--blue);
+  background:rgba(74,158,255,0.1); color:var(--blue);
+  font-family:var(--font); transition:all 0.2s;
+}
+.nearme-btn:active { opacity:0.7; }
+.nearme-btn.on { background:var(--blue); color:#fff; }
+.nearme-dist { font-size:12px; color:var(--blue); font-weight:700; }
+
+/* Guide tab */
+.guide-section {
+  padding:16px 20px; border-bottom:1px solid var(--border);
+}
+.guide-hdr {
+  font-size:11px; font-weight:700; text-transform:uppercase;
+  letter-spacing:0.12em; color:var(--text3); margin-bottom:12px;
+}
+.suggest-text {
+  font-size:13px; color:var(--text2); line-height:1.5;
+  padding:8px 12px; background:var(--card); border-radius:8px;
+  border:1px solid var(--border); margin-top:6px;
+}
+.suggest-text a { color:var(--blue); text-decoration:none; font-weight:600; cursor:pointer; }
+.info-grid {
+  display:flex; flex-direction:column; gap:8px;
+}
+.info-item {
+  display:flex; gap:10px; padding:10px 12px;
+  background:var(--card); border-radius:10px; border:1px solid var(--border);
+  align-items:flex-start;
+}
+.info-item .ii-icon { font-size:18px; flex-shrink:0; }
+.info-item .ii-label { font-size:12px; font-weight:700; margin-bottom:2px; }
+.info-item .ii-text { font-size:12px; color:var(--text2); line-height:1.3; }
+.phrase-list { display:flex; flex-direction:column; gap:6px; }
+.phrase {
+  display:flex; justify-content:space-between; align-items:baseline;
+  padding:10px 14px; background:var(--card); border-radius:8px;
+  border:1px solid var(--border); gap:12px;
+}
+.phrase-it { font-size:14px; font-weight:700; color:var(--text); font-style:italic; }
+.phrase-en { font-size:12px; color:var(--text3); text-align:right; flex-shrink:0; }
+
 /* Nearby restaurants in route stops */
 .nearby-hdr {
   font-size:11px; font-weight:700; text-transform:uppercase;
@@ -502,6 +551,7 @@ const restLayer = L.layerGroup();
 const restMarkers = [];
 let activeTab = 'route';
 let activeFilter = null;
+let nearMePos = null;
 
 function popupHtml(s) {
   const gUrl = `https://www.google.com/maps/dir/?api=1&destination=${s.lat}%2C${s.lng}&travelmode=walking`;
@@ -666,13 +716,16 @@ function renderPanel() {
   // Tabs
   h += `<div class="tabs">
     <button class="tab${activeTab==='route'?' active':''}" onclick="switchTab('route')">Route</button>
-    <button class="tab${activeTab==='restaurants'?' active':''}" onclick="switchTab('restaurants')">Restaurants</button>
+    <button class="tab${activeTab==='restaurants'?' active':''}" onclick="switchTab('restaurants')">Eat</button>
+    <button class="tab${activeTab==='guide'?' active':''}" onclick="switchTab('guide')">Guide</button>
   </div>`;
 
   if (activeTab === 'route') {
     h += renderRouteContent();
-  } else {
+  } else if (activeTab === 'restaurants') {
     h += renderRestContent();
+  } else {
+    h += renderGuideContent();
   }
 
   // Footer
@@ -767,71 +820,6 @@ function renderRouteContent() {
     </div>
   </div>`;
 
-  // Week overview
-  h += `<div class="week">
-    <div class="week-hdr">Trip Overview &middot; Feb 15&#8211;21</div>
-
-    <div class="day day-today">
-      <div class="day-date"><div class="day-dow">Sat</div><div class="day-num">15</div></div>
-      <div class="day-info"><div class="day-events">
-        <div class="day-event ev-booked">
-          <span class="ev-time">10:00</span>
-          <span class="ev-name">Walking Tour</span>
-          <span class="ev-note">(this page!)</span>
-          <span class="ev-badge">TODAY</span>
-        </div>
-        <div class="day-event ev-booked">
-          <span class="ev-time">10:00</span>
-          <span class="ev-name">Trevi Fountain</span>
-          <span class="ev-badge">BOOKED</span>
-        </div>
-      </div></div>
-    </div>
-
-    <div class="day">
-      <div class="day-date"><div class="day-dow">Sun</div><div class="day-num">16</div></div>
-      <div class="day-info"><div class="day-open">Open &#8212; plan as you go</div></div>
-    </div>
-
-    <div class="day">
-      <div class="day-date"><div class="day-dow">Mon</div><div class="day-num">17</div></div>
-      <div class="day-info"><div class="day-open">Open &#8212; plan as you go</div></div>
-    </div>
-
-    <div class="day">
-      <div class="day-date"><div class="day-dow">Tue</div><div class="day-num">18</div></div>
-      <div class="day-info"><div class="day-open">Open &#8212; plan as you go</div></div>
-    </div>
-
-    <div class="day">
-      <div class="day-date"><div class="day-dow">Wed</div><div class="day-num">19</div></div>
-      <div class="day-info"><div class="day-events">
-        <div class="day-event ev-booked">
-          <span class="ev-time">10:00</span>
-          <span class="ev-name">Pantheon</span>
-          <span class="ev-note">&#8364;5/pp</span>
-          <span class="ev-badge">BOOKED</span>
-        </div>
-      </div></div>
-    </div>
-
-    <div class="day">
-      <div class="day-date"><div class="day-dow">Thu</div><div class="day-num">20</div></div>
-      <div class="day-info"><div class="day-open">Open &#8212; plan as you go</div></div>
-    </div>
-
-    <div class="day">
-      <div class="day-date"><div class="day-dow">Fri</div><div class="day-num">21</div></div>
-      <div class="day-info"><div class="day-events">
-        <div class="day-event">
-          <span class="ev-time">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-          <span class="ev-name">Last day</span>
-          <span class="ev-note">&#9992; Departure</span>
-        </div>
-      </div></div>
-    </div>
-
-  </div>`;
 
   return h;
 }
@@ -839,9 +827,26 @@ function renderRouteContent() {
 function renderRestContent() {
   let h = '';
 
-  const filtered = RESTAURANTS.filter(r => !activeFilter || r.tag === activeFilter);
-  const countText = activeFilter ? filtered.length + '/' + RESTAURANTS.length : RESTAURANTS.length;
+  // Build ordered list (Near Me sorts by distance, default groups by area)
+  let order;
+  if (nearMePos) {
+    order = RESTAURANTS.map((r,i) => ({i, d:distM(nearMePos.lat,nearMePos.lng,r.lat,r.lng)}))
+      .filter(x => !activeFilter || RESTAURANTS[x.i].tag === activeFilter)
+      .sort((a,b) => a.d - b.d);
+  } else {
+    order = RESTAURANTS.map((r,i) => ({i, d:0}))
+      .filter(x => !activeFilter || RESTAURANTS[x.i].tag === activeFilter);
+  }
+
+  const countText = activeFilter ? order.length + '/' + RESTAURANTS.length : RESTAURANTS.length;
   h += '<div class="shdr">Restaurant Recommendations &middot; ' + countText + ' places</div>';
+
+  // Near Me button
+  h += '<div class="nearme-bar">';
+  h += `<button class="nearme-btn${nearMePos?' on':''}" onclick="${nearMePos?'clearNearMe()':'sortNearMe()'}">
+    <i class="fa fa-location-crosshairs"></i> ${nearMePos?'Near Me &#10003;':'Near Me'}
+  </button>`;
+  h += '</div>';
 
   // Filter chips
   const tags = [...new Set(RESTAURANTS.map(r => r.tag))];
@@ -854,21 +859,29 @@ function renderRestContent() {
   }
   h += '</div>';
 
-  // Group by area
+  // Restaurant cards
   let lastArea = '';
-  RESTAURANTS.forEach((r, i) => {
-    const show = !activeFilter || r.tag === activeFilter;
-    if (show && r.area !== lastArea) {
+  order.forEach(({i, d}) => {
+    const r = RESTAURANTS[i];
+
+    // Area headers (only when not in Near Me mode)
+    if (!nearMePos && r.area !== lastArea) {
       h += `<div class="rest-group-hdr">${r.area}</div>`;
       lastArea = r.area;
     }
-    if (!show) return;
+
     const gUrl = `https://www.google.com/maps/dir/?api=1&destination=${r.lat}%2C${r.lng}&travelmode=walking`;
     const aUrl = `https://maps.apple.com/?daddr=${r.lat},${r.lng}&dirflg=w`;
     const badgeHtml = `<span class="badge badge-${r.tag} clickable" onclick="event.stopPropagation();filterTag('${r.tag}')">${TAG_LABELS[r.tag]}</span>`;
 
-    const ns = nearestStop(r.lat,r.lng);
-    const nearLabel = ns.s ? `${walkMin(ns.d)} min from ${ns.s.name}` : '';
+    // Distance label
+    let distLabel = '';
+    if (nearMePos) {
+      distLabel = `<span class="nearme-dist">${walkMin(d)} min walk</span>`;
+    } else {
+      const ns = nearestStop(r.lat,r.lng);
+      distLabel = ns.s ? `<span class="rnear">${walkMin(ns.d)} min from ${ns.s.name}</span>` : '';
+    }
 
     h += `<div class="rest" data-ri="${i}" onclick="goRest(${i})">
       <div class="rnum${r.tag==='michelin'?' michelin':''}">${i+1}</div>
@@ -879,7 +892,7 @@ function renderRestContent() {
           <span class="star-val">${r.stars}</span>
           <span class="rev-count">(${r.reviews} reviews)</span>
         </div>
-        <div class="raddr">${r.addr}${nearLabel ? ` &middot; <span class="rnear">${nearLabel}</span>` : ''}</div>
+        <div class="raddr">${r.addr}${distLabel ? ' &middot; ' + distLabel : ''}</div>
         <div class="rest-expand">
           ${r.note ? `<div class="rnote">${r.note}</div>` : ''}
           ${r.photo ? `<img class="rphoto" src="${r.photo}" alt="${r.name}" loading="lazy" onerror="this.style.display='none'">` : ''}
@@ -899,6 +912,135 @@ function renderRestContent() {
   return h;
 }
 
+function renderGuideContent() {
+  let h = '';
+
+  // Week planner
+  h += '<div class="shdr">Trip Planner &middot; Feb 15&#8211;21</div>';
+
+  const days = [
+    {
+      dow:'Sat', num:15, today:true,
+      events: [
+        { time:'10:00', name:'Walking Tour', note:'(this app!)', booked:true },
+        { time:'10:00', name:'Trevi Fountain', booked:true }
+      ]
+    },
+    {
+      dow:'Sun', num:16,
+      suggest: 'Trastevere &mdash; wander cobbled lanes, visit Santa Maria in Trastevere (free), lunch at <a onclick="goToRest(9)">Da Teo</a> or <a onclick="goToRest(10)">Zia</a>, then climb Gianicolo Hill for panoramic sunset views.'
+    },
+    {
+      dow:'Mon', num:17,
+      suggest: 'Vatican Museums + Sistine Chapel (&euro;17/pp, book ahead!). After: lunch in Prati neighborhood. Alternative: Villa Borghese gardens (free) + Galleria Borghese (&euro;15, must book).'
+    },
+    {
+      dow:'Tue', num:18,
+      suggest: 'Testaccio food district &mdash; browse the market, lunch at <a onclick="goToRest(11)">Flavio al Velavevodetto</a>. Afternoon: Non-Catholic Cemetery (Keats\' grave, free) + Aventine Hill keyhole view of St Peter\'s.'
+    },
+    {
+      dow:'Wed', num:19,
+      events: [
+        { time:'10:00', name:'Pantheon', note:'&euro;5/pp', booked:true }
+      ],
+      suggest: 'After Pantheon: gelato at Giolitti (5 min walk), window shop Via del Corso, or revisit Piazza Navona. Lunch near <a onclick="goToRest(0)">Grano</a> or <a onclick="goToRest(3)">Casa Bleve</a>.'
+    },
+    {
+      dow:'Thu', num:20,
+      suggest: 'Monti neighborhood &mdash; trendy shops on Via del Boschetto, wine bars, street food. Or day trip to Tivoli (Villa d\'Este gardens, 45 min by train, &euro;13/pp).'
+    },
+    {
+      dow:'Fri', num:21,
+      events: [
+        { name:'Last day', note:'&#9992; Departure' }
+      ]
+    }
+  ];
+
+  h += '<div class="week">';
+  days.forEach(day => {
+    h += `<div class="day${day.today?' day-today':''}">
+      <div class="day-date"><div class="day-dow">${day.dow}</div><div class="day-num">${day.num}</div></div>
+      <div class="day-info">`;
+
+    if (day.events) {
+      h += '<div class="day-events">';
+      day.events.forEach(ev => {
+        h += `<div class="day-event${ev.booked?' ev-booked':''}">
+          ${ev.time ? `<span class="ev-time">${ev.time}</span>` : ''}
+          <span class="ev-name">${ev.name}</span>
+          ${ev.note ? `<span class="ev-note">${ev.note}</span>` : ''}
+          ${ev.booked ? '<span class="ev-badge">BOOKED</span>' : ''}
+        </div>`;
+      });
+      h += '</div>';
+    }
+
+    if (day.suggest) {
+      h += `<div class="suggest-text">${day.suggest}</div>`;
+    }
+
+    if (!day.events && !day.suggest) {
+      h += '<div class="day-open">Open &mdash; plan as you go</div>';
+    }
+
+    h += '</div></div>';
+  });
+  h += '</div>';
+
+  // Practical info
+  h += '<div class="guide-section"><div class="guide-hdr">Practical Info</div>';
+  h += '<div class="info-grid">';
+
+  const infos = [
+    { icon:'&#128647;', label:'Metro', text:'Line A covers tourist center. Key stops: Spagna, Barberini, Ottaviano (Vatican).' },
+    { icon:'&#128688;', label:'Water', text:'"Nasoni" fountains everywhere &mdash; free, safe drinking water. Cover the spout hole to drink from the top.' },
+    { icon:'&#128138;', label:'Pharmacy', text:'Green cross signs. Open pharmacies rotate on Sundays & holidays.' },
+    { icon:'&#127978;', label:'Siesta', text:'Many shops close 13:00&ndash;16:00. Restaurants usually stay open.' },
+    { icon:'&#128182;', label:'Tipping', text:'Not expected in Italy. Round up or leave &euro;1&ndash;2 if happy with service.' },
+    { icon:'&#128222;', label:'Emergency', text:'112 (EU-wide). Police: 113. Ambulance: 118.' },
+    { icon:'&#128118;', label:'Baby', text:'Most restaurants happy to accommodate. Cobblestones tough on strollers &mdash; front carrier useful for hills.' },
+    { icon:'&#128661;', label:'Taxis', text:'Only use white licensed taxis. Fixed airport rates. Free Now app works well.' }
+  ];
+
+  infos.forEach(info => {
+    h += `<div class="info-item">
+      <span class="ii-icon">${info.icon}</span>
+      <div><div class="ii-label">${info.label}</div><div class="ii-text">${info.text}</div></div>
+    </div>`;
+  });
+
+  h += '</div></div>';
+
+  // Italian phrases
+  h += '<div class="guide-section"><div class="guide-hdr">Italian Phrases for Restaurants</div>';
+  h += '<div class="phrase-list">';
+
+  const phrases = [
+    { it:'Un tavolo per sei, per favore', en:'Table for 6, please' },
+    { it:'Un seggiolone, per favore', en:'A high chair, please' },
+    { it:'Il conto, per favore', en:'The bill, please' },
+    { it:"Dov'&egrave; il bagno?", en:"Where's the bathroom?" },
+    { it:'Acqua naturale / frizzante', en:'Still / sparkling water' },
+    { it:'Possiamo sederci fuori?', en:'Can we sit outside?' },
+    { it:'Avete un men&ugrave; in inglese?', en:'English menu?' },
+    { it:'Senza glutine / lattosio', en:'Gluten / lactose free' },
+    { it:'Grazie', en:'Thank you' },
+    { it:'Scusi / Permesso', en:'Excuse me / Let me through' }
+  ];
+
+  phrases.forEach(p => {
+    h += `<div class="phrase">
+      <span class="phrase-it">"${p.it}"</span>
+      <span class="phrase-en">${p.en}</span>
+    </div>`;
+  });
+
+  h += '</div></div>';
+
+  return h;
+}
+
 // ============================================================
 // INTERACTION
 // ============================================================
@@ -908,7 +1050,7 @@ function switchTab(tab) {
   if (tab === activeTab) return;
   activeTab = tab;
   activeFilter = null;
-  if (tab === 'route') {
+  if (tab === 'route' || tab === 'guide') {
     map.removeLayer(restLayer);
     routeLayer.addTo(map);
     map.fitBounds(routeBounds, { padding:[40,40] });
@@ -918,6 +1060,24 @@ function switchTab(tab) {
     map.fitBounds(restBounds, { padding:[40,40] });
   }
   map.closePopup();
+  renderPanel();
+}
+
+function sortNearMe() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(pos) {
+      nearMePos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      renderPanel();
+    }, function() {
+      alert('Could not get location. Check that location services are enabled.');
+    }, { enableHighAccuracy: true, timeout: 10000 });
+  } else {
+    alert('Geolocation not supported by this browser.');
+  }
+}
+
+function clearNearMe() {
+  nearMePos = null;
   renderPanel();
 }
 
@@ -985,6 +1145,11 @@ function goRest(i) {
 }
 
 renderPanel();
+
+// Service Worker for offline support
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(function() {});
+}
 </script>
 </body>
 </html>
