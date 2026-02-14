@@ -252,34 +252,28 @@ const STOPS = [
     opt:true
   },
   {
-    n:5, name:"Pantheon", lat:41.8986, lng:12.4769,
-    time:"11:15", dur:"30 min", cost:"€5/pp",
-    notes:"Book tickets if you haven't! The oculus (hole in the dome) is 9m wide. Free for under-18s. Raphael's tomb is inside.",
-    opt:false
-  },
-  {
-    n:6, name:"Piazza Navona", lat:41.8992, lng:12.4731,
-    time:"12:00", dur:"20 min", cost:"Free",
+    n:5, name:"Piazza Navona", lat:41.8992, lng:12.4731,
+    time:"11:15", dur:"20 min", cost:"Free",
     notes:"Three fountains, street artists. Flat & spacious -- great for stroller. Bernini's Fountain of the Four Rivers in the centre.",
     opt:false
   },
   {
-    n:7, name:"Campo de' Fiori", lat:41.8956, lng:12.4722,
-    time:"12:30", dur:"45 min", cost:"Free",
+    n:6, name:"Campo de' Fiori", lat:41.8956, lng:12.4722,
+    time:"11:45", dur:"45 min", cost:"Free",
     badge:"lunch", badgeText:"LUNCH",
     notes:"Morning market (until ~14:00). Great lunch spots on side streets -- try Roscioli or Forno Campo de' Fiori for pizza al taglio.",
     opt:false
   },
   {
-    n:8, name:"Galleria Doria Pamphilj", lat:41.8978, lng:12.4810,
-    time:"13:15", dur:"45 min", cost:"€14/pp",
+    n:7, name:"Galleria Doria Pamphilj", lat:41.8978, lng:12.4810,
+    time:"12:45", dur:"45 min", cost:"€14/pp",
     badge:"opt", badgeText:"OPTIONAL",
     notes:"Stunning private palace gallery. Velazquez's Pope Innocent X is here. Audio guide included. Skip if tired.",
     opt:true
   },
   {
-    n:9, name:"Piazza Venezia", lat:41.8958, lng:12.4823,
-    time:"13:30", dur:"20 min", cost:"Free",
+    n:8, name:"Piazza Venezia", lat:41.8958, lng:12.4823,
+    time:"13:00", dur:"20 min", cost:"Free",
     badge:"end", badgeText:"FINISH",
     notes:"Vittoriano monument has free entry + paid roof terrace with panoramic views (€12). Great way to end the walk!",
     opt:false
@@ -367,7 +361,7 @@ function renderPanel() {
   </div>`;
 
   // Schedule header
-  h += '<div class="shdr">Schedule &middot; 9 stops &middot; ~3.5 hrs</div>';
+  h += '<div class="shdr">Schedule &middot; 8 stops &middot; ~3 hrs</div>';
 
   // Stop cards
   STOPS.forEach((s, i) => {
@@ -410,7 +404,7 @@ function renderPanel() {
     <div class="tip-card">
       <span class="tip-icon">&#128118;</span>
       <div><div class="tip-label" style="color:var(--accent)">Baby-friendly</div>
-      <div class="tip-text">Piazza Navona is flat & spacious for stroller breaks. Pantheon has smooth floors inside. Skip Barberini if baby is fussy.</div></div>
+      <div class="tip-text">Piazza Navona is flat & spacious for stroller breaks. Skip Barberini if baby is fussy.</div></div>
     </div>
     <div class="tip-card">
       <span class="tip-icon">&#128647;</span>
