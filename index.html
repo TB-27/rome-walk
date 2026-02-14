@@ -167,6 +167,40 @@ html, body { height:100%; overflow:hidden; font-family:var(--font); background:v
 .tip-label { font-size:13px; font-weight:700; margin-bottom:2px; }
 .tip-text { font-size:13px; color:var(--text2); line-height:1.4; }
 
+/* Week overview */
+.week { padding:0 20px 8px; }
+.week-hdr {
+  padding:14px 0 10px; font-size:11px; font-weight:700;
+  text-transform:uppercase; letter-spacing:0.12em; color:var(--text3);
+  border-bottom:1px solid var(--border); margin-bottom:0;
+}
+.day {
+  display:flex; gap:14px; padding:14px 0;
+  border-bottom:1px solid var(--border);
+  align-items:flex-start;
+}
+.day-date {
+  min-width:52px; flex-shrink:0;
+}
+.day-dow { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; }
+.day-num { font-size:20px; font-weight:800; color:var(--text); }
+.day-today .day-num { color:var(--accent); }
+.day-today .day-dow { color:var(--accent); }
+.day-info { flex:1; min-width:0; }
+.day-events { display:flex; flex-direction:column; gap:6px; }
+.day-event {
+  display:flex; align-items:center; gap:8px;
+  padding:8px 12px; border-radius:8px;
+  background:var(--card); border:1px solid var(--border);
+  font-size:13px;
+}
+.day-event .ev-time { color:var(--blue); font-weight:700; min-width:44px; }
+.day-event .ev-name { color:var(--text); font-weight:600; }
+.day-event .ev-note { color:var(--text2); margin-left:4px; }
+.day-event.ev-booked { border-color:rgba(92,212,122,0.3); }
+.day-event.ev-booked .ev-badge { color:var(--green); font-size:11px; font-weight:700; margin-left:auto; }
+.day-open { font-size:13px; color:var(--text3); font-style:italic; padding:4px 0; }
+
 /* Footer */
 .footer {
   padding:12px 20px 24px; text-align:center;
@@ -390,8 +424,74 @@ function renderPanel() {
     </div>
   </div>`;
 
+  // Week overview
+  h += `<div class="week">
+    <div class="week-hdr">Trip Overview &middot; Feb 15–21</div>
+
+    <div class="day day-today">
+      <div class="day-date"><div class="day-dow">Sat</div><div class="day-num">15</div></div>
+      <div class="day-info"><div class="day-events">
+        <div class="day-event ev-booked">
+          <span class="ev-time">10:00</span>
+          <span class="ev-name">Walking Tour</span>
+          <span class="ev-note">(this page!)</span>
+          <span class="ev-badge">TODAY</span>
+        </div>
+        <div class="day-event ev-booked">
+          <span class="ev-time">10:00</span>
+          <span class="ev-name">Trevi Fountain</span>
+          <span class="ev-badge">BOOKED</span>
+        </div>
+      </div></div>
+    </div>
+
+    <div class="day">
+      <div class="day-date"><div class="day-dow">Sun</div><div class="day-num">16</div></div>
+      <div class="day-info"><div class="day-open">Open — plan as you go</div></div>
+    </div>
+
+    <div class="day">
+      <div class="day-date"><div class="day-dow">Mon</div><div class="day-num">17</div></div>
+      <div class="day-info"><div class="day-open">Open — plan as you go</div></div>
+    </div>
+
+    <div class="day">
+      <div class="day-date"><div class="day-dow">Tue</div><div class="day-num">18</div></div>
+      <div class="day-info"><div class="day-open">Open — plan as you go</div></div>
+    </div>
+
+    <div class="day">
+      <div class="day-date"><div class="day-dow">Wed</div><div class="day-num">19</div></div>
+      <div class="day-info"><div class="day-events">
+        <div class="day-event ev-booked">
+          <span class="ev-time">10:00</span>
+          <span class="ev-name">Pantheon</span>
+          <span class="ev-note">€5/pp</span>
+          <span class="ev-badge">BOOKED</span>
+        </div>
+      </div></div>
+    </div>
+
+    <div class="day">
+      <div class="day-date"><div class="day-dow">Thu</div><div class="day-num">20</div></div>
+      <div class="day-info"><div class="day-open">Open — plan as you go</div></div>
+    </div>
+
+    <div class="day">
+      <div class="day-date"><div class="day-dow">Fri</div><div class="day-num">21</div></div>
+      <div class="day-info"><div class="day-events">
+        <div class="day-event">
+          <span class="ev-time">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+          <span class="ev-name">Last day</span>
+          <span class="ev-note">&#9992; Departure</span>
+        </div>
+      </div></div>
+    </div>
+
+  </div>`;
+
   // Footer
-  h += `<div class="footer">5 adults + 1 baby &middot; Sat 15 Feb 2026 &middot; Trevi tickets pre-booked<br>
+  h += `<div class="footer">5 adults + 1 baby &middot; Feb 15–21 2026 &middot; Trevi tickets pre-booked<br>
   <span style="opacity:0.5;font-size:11px">Tap any stop to see it on the map. Navigate buttons open your maps app.</span></div>`;
 
   p.innerHTML = h;
