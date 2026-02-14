@@ -310,6 +310,35 @@ html, body { height:100%; overflow:hidden; font-family:var(--font); background:v
 .badge.clickable { cursor:pointer; }
 .badge.clickable:active { opacity:0.7; }
 .rest.dimmed { opacity:0.3; }
+
+/* Nearby restaurants in route stops */
+.nearby-hdr {
+  font-size:11px; font-weight:700; text-transform:uppercase;
+  letter-spacing:0.1em; color:var(--text3); margin-top:12px; margin-bottom:6px;
+  padding-top:8px; border-top:1px solid var(--border);
+}
+.nearby-rest {
+  display:flex; align-items:center; gap:10px;
+  padding:8px 10px; margin-bottom:4px;
+  background:var(--card-alt); border-radius:8px; border:1px solid var(--border);
+  cursor:pointer; transition:background 0.15s;
+}
+.nearby-rest:active { background:var(--card); }
+.nr-left { display:flex; flex-direction:column; align-items:center; min-width:40px; }
+.nr-walk { font-size:13px; font-weight:800; color:var(--orange); }
+.nr-icon { font-size:12px; line-height:1; }
+.nr-info { flex:1; min-width:0; }
+.nr-name { font-size:13px; font-weight:600; color:var(--text); display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.nr-name .badge { font-size:9px; padding:1px 5px; }
+.nr-meta { font-size:11px; color:var(--text3); margin-top:2px; }
+.nr-meta .star-fill { color:#f5c842; }
+.nr-go {
+  width:32px; height:32px; border-radius:50%; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(74,158,255,0.12); color:var(--blue);
+  text-decoration:none; font-size:16px; font-weight:700;
+  border:1px solid rgba(74,158,255,0.25);
+}
 </style>
 </head>
 <body>
@@ -382,25 +411,25 @@ const STOPS = [
 
 const RESTAURANTS = [
   // Centro Storico
-  { name:"Ristorante Grano", lat:41.8999, lng:12.4757, area:"Centro Storico", addr:"Piazza Rondanini 53", tag:"roman", stars:4.6, reviews:"860", note:"Upscale Mediterranean with creative seafood and pasta near Pantheon", photo:"https://www.ristorantegrano.it/wp-content/uploads/2014/09/AglioOlioCalamaro.jpg" },
-  { name:"Roscioli", lat:41.8943, lng:12.4742, area:"Centro Storico", addr:"Via dei Giubbonari 21", tag:"deli", stars:4.3, reviews:"6K", note:"Legendary salumeria \u2014 world-class cured meats, cheeses, and cacio e pepe. Book ahead.", photo:"" },
-  { name:"Il SanLorenzo", lat:41.8953, lng:12.4742, area:"Centro Storico", addr:"Via dei Chiavari 4/5", tag:"seafood", stars:4.4, reviews:"513", note:"Elegant Michelin-listed seafood from Ponza in a historic palazzo setting", photo:"" },
-  { name:"Casa Bleve", lat:41.8976, lng:12.4751, area:"Centro Storico", addr:"Via del Teatro Valle 48", tag:"wine", stars:4.6, reviews:"881", note:"Stunning 16th-century palazzo wine bar with world-class Italian flavors", photo:"https://www.casableve.com/wp/wp-content/uploads/2017/02/home_restaurant2_pic2-1.jpg" },
-  { name:"Osteria La Quercia", lat:41.8945, lng:12.4717, area:"Centro Storico", addr:"Piazza della Quercia 23", tag:"roman", stars:4.3, reviews:"1.4K", note:"Authentic Roman classics on a charming quiet piazza near Campo de' Fiori", photo:"" },
-  { name:"Osteria delle Coppelle", lat:41.9009, lng:12.4760, area:"Centro Storico", addr:"Piazza delle Coppelle 54", tag:"roman", stars:3.9, reviews:"2.6K", note:"Classic Roman dishes in a beautiful piazza with cozy atmosphere", photo:"https://osteriadellecoppelle.com/wp-content/uploads/2022/03/image00020-scaled-e1647344462899.jpeg" },
-  { name:"Retrobottega", lat:41.9019, lng:12.4752, area:"Centro Storico", addr:"Via della Stelletta 4", tag:"modern", stars:4.5, reviews:"1.1K", note:"Michelin-recommended 26-seat gem with foraged ingredients near Pantheon", photo:"" },
-  { name:"Hostaria da Pietro", lat:41.9084, lng:12.4782, area:"Centro Storico", addr:"Via Ges\u00f9 e Maria 18", tag:"roman", stars:4.0, reviews:"2.3K", note:"Beloved twinkling-lit trattoria near Spanish Steps with superb Roman pastas", photo:"https://hostariadapietro.it/wp-content/uploads/2016/06/slide5.jpg" },
-  { name:"Per Me Giulio Terrinoni", lat:41.8973, lng:12.4674, area:"Centro Storico", addr:"Vicolo del Malpasso 9", tag:"michelin", stars:4.6, reviews:"834", note:"Michelin-starred seafood with unfussy elegance near Via Giulia. Book ahead.", photo:"https://www.giulioterrinoni.it/eng/wp-content/uploads/2023/01/IL-RISTORANTE-1-1030x687-1030x687.jpg" },
+  { name:"Ristorante Grano", lat:41.8999, lng:12.4757, area:"Centro Storico", addr:"Piazza Rondanini 53", tag:"roman", stars:4.6, reviews:"860", note:"Upscale Mediterranean with creative seafood and pasta near Pantheon", photo:"https://www.ristorantegrano.it/wp-content/uploads/2014/09/AglioOlioCalamaro.jpg", web:"https://www.ristorantegrano.it/" },
+  { name:"Roscioli", lat:41.8943, lng:12.4742, area:"Centro Storico", addr:"Via dei Giubbonari 21", tag:"deli", stars:4.3, reviews:"6K", note:"Legendary salumeria \u2014 world-class cured meats, cheeses, and cacio e pepe. Book ahead.", photo:"https://salumeriaroscioli.com/cdn/shop/files/Screenshot_2024-11-05_alle_09.46.55_1_1.jpg?v=1734078689&width=2000", web:"https://salumeriaroscioli.com/" },
+  { name:"Il SanLorenzo", lat:41.8953, lng:12.4742, area:"Centro Storico", addr:"Via dei Chiavari 4/5", tag:"seafood", stars:4.4, reviews:"513", note:"Elegant Michelin-listed seafood from Ponza in a historic palazzo setting", photo:"https://katieparla.com/wp-content/uploads/2014/06/il-sanlorenzo-dining-room.jpg", web:"https://www.ilsanlorenzo.it/" },
+  { name:"Casa Bleve", lat:41.8976, lng:12.4751, area:"Centro Storico", addr:"Via del Teatro Valle 48", tag:"wine", stars:4.6, reviews:"881", note:"Stunning 16th-century palazzo wine bar with world-class Italian flavors", photo:"https://www.casableve.com/wp/wp-content/uploads/2017/02/home_restaurant2_pic2-1.jpg", web:"https://www.casableve.com/" },
+  { name:"Osteria La Quercia", lat:41.8945, lng:12.4717, area:"Centro Storico", addr:"Piazza della Quercia 23", tag:"roman", stars:4.3, reviews:"1.4K", note:"Authentic Roman classics on a charming quiet piazza near Campo de' Fiori", photo:"https://www.osterialaquercia.com/wp-content/uploads/2020/10/tavola-la-quercia-osteria-1440x960.jpg", web:"https://www.osterialaquercia.com/" },
+  { name:"Osteria delle Coppelle", lat:41.9009, lng:12.4760, area:"Centro Storico", addr:"Piazza delle Coppelle 54", tag:"roman", stars:3.9, reviews:"2.6K", note:"Classic Roman dishes in a beautiful piazza with cozy atmosphere", photo:"https://osteriadellecoppelle.com/wp-content/uploads/2022/03/image00020-scaled-e1647344462899.jpeg", web:"https://osteriadellecoppelle.com/" },
+  { name:"Retrobottega", lat:41.9019, lng:12.4752, area:"Centro Storico", addr:"Via della Stelletta 4", tag:"modern", stars:4.5, reviews:"1.1K", note:"Michelin-recommended 26-seat gem with foraged ingredients near Pantheon", photo:"https://www.theworlds50best.com/discovery/filestore/jpg/Retrobottega-Rome-Italy-01.jpg", web:"https://www.retro-bottega.com/" },
+  { name:"Hostaria da Pietro", lat:41.9084, lng:12.4782, area:"Centro Storico", addr:"Via Ges\u00f9 e Maria 18", tag:"roman", stars:4.0, reviews:"2.3K", note:"Beloved twinkling-lit trattoria near Spanish Steps with superb Roman pastas", photo:"https://hostariadapietro.it/wp-content/uploads/2016/06/slide5.jpg", web:"https://hostariadapietro.it/" },
+  { name:"Per Me Giulio Terrinoni", lat:41.8973, lng:12.4674, area:"Centro Storico", addr:"Vicolo del Malpasso 9", tag:"michelin", stars:4.6, reviews:"834", note:"Michelin-starred seafood with unfussy elegance near Via Giulia. Book ahead.", photo:"https://www.giulioterrinoni.it/eng/wp-content/uploads/2023/01/IL-RISTORANTE-1-1030x687-1030x687.jpg", web:"https://www.giulioterrinoni.it/" },
   // Trastevere
-  { name:"Da Teo", lat:41.8885, lng:12.4776, area:"Trastevere", addr:"Piazza dei Ponziani 7A", tag:"roman", stars:4.2, reviews:"3.7K", note:"Ivy-clad Trastevere favorite with generous portions and charming courtyard", photo:"" },
-  { name:"Zia Restaurant", lat:41.8870, lng:12.4681, area:"Trastevere", addr:"Via Goffredo Mameli 45", tag:"michelin", stars:4.7, reviews:"638", note:"Michelin-starred intimate 30-seat Trastevere gem with creative refined cuisine", photo:"" },
+  { name:"Da Teo", lat:41.8885, lng:12.4776, area:"Trastevere", addr:"Piazza dei Ponziani 7A", tag:"roman", stars:4.2, reviews:"3.7K", note:"Ivy-clad Trastevere favorite with generous portions and charming courtyard", photo:"https://thetasteedit.com/wp-content/uploads/2021/03/trattoria-da-teo-puntarelle-buratta-restaurant-trastevere-rome-italy-thetasteedit-sarah-stanfield-1010289-scaled.jpg", web:"http://www.trattoriadateo.it/" },
+  { name:"Zia Restaurant", lat:41.8870, lng:12.4681, area:"Trastevere", addr:"Via Goffredo Mameli 45", tag:"michelin", stars:4.7, reviews:"638", note:"Michelin-starred intimate 30-seat Trastevere gem with creative refined cuisine", photo:"https://i0.wp.com/eatweekguide.com/wp-content/uploads/2024/09/eatweekguide.com-zia-22-1.jpg?fit=1920%2C1280&ssl=1", web:"https://ziarestaurant.com/" },
   // Testaccio / Ostiense
-  { name:"Flavio al Velavevodetto", lat:41.8764, lng:12.4760, area:"Testaccio", addr:"Via di Monte Testaccio 97", tag:"roman", stars:4.2, reviews:"6K", note:"Iconic Testaccio trattoria \u2014 legendary cacio e pepe and carbonara", photo:"https://www.ristorantevelavevodetto.it/wp-content/uploads/2025/03/velavevodetto-ristorante-roma-testaccio-gallery-4.jpg" },
-  { name:"Trattoria Pennestri", lat:41.8733, lng:12.4799, area:"Ostiense", addr:"Via Giovanni da Empoli 5", tag:"modern", stars:4.4, reviews:"1.3K", note:"Bib Gourmand modern trattoria with top-quality seasonal ingredients", photo:"https://trattoriapennestri.it/wp-content/uploads/2020/04/FOTO-IN-ALTO-PAGNINA-HOME.jpg" },
-  { name:"Trecca", lat:41.8535, lng:12.4868, area:"Ostiense", addr:"Via Alessandro Severo 222", tag:"market", stars:4.4, reviews:"1.3K", note:"Vintage-charm osteria with authentic Roman cuisine and natural wines", photo:"" },
+  { name:"Flavio al Velavevodetto", lat:41.8764, lng:12.4760, area:"Testaccio", addr:"Via di Monte Testaccio 97", tag:"roman", stars:4.2, reviews:"6K", note:"Iconic Testaccio trattoria \u2014 legendary cacio e pepe and carbonara", photo:"https://www.ristorantevelavevodetto.it/wp-content/uploads/2025/03/velavevodetto-ristorante-roma-testaccio-gallery-4.jpg", web:"https://www.ristorantevelavevodetto.it/" },
+  { name:"Trattoria Pennestri", lat:41.8733, lng:12.4799, area:"Ostiense", addr:"Via Giovanni da Empoli 5", tag:"modern", stars:4.4, reviews:"1.3K", note:"Bib Gourmand modern trattoria with top-quality seasonal ingredients", photo:"https://trattoriapennestri.it/wp-content/uploads/2020/04/FOTO-IN-ALTO-PAGNINA-HOME.jpg", web:"http://trattoriapennestri.it/" },
+  { name:"Trecca", lat:41.8535, lng:12.4868, area:"Ostiense", addr:"Via Alessandro Severo 222", tag:"market", stars:4.4, reviews:"1.3K", note:"Vintage-charm osteria with authentic Roman cuisine and natural wines", photo:"https://i0.wp.com/luggageandlife.com/wp-content/uploads/2023/04/Rigatoni-con-sugo-di-coda-at-Trecca-in-Rome-Italy.png?fit=1000%2C1500&ssl=1", web:"" },
   // Other
-  { name:"Da Roberto e Loretta", lat:41.8790, lng:12.5058, area:"Esquilino", addr:"Via Saturnia 18-24", tag:"roman", stars:4.5, reviews:"1.4K", note:"Family-run neighborhood gem with outstanding traditional Roman dishes", photo:"" },
-  { name:"Santo Palato", lat:41.8815, lng:12.5015, area:"San Giovanni", addr:"Via Gallia 28", tag:"roman", stars:4.3, reviews:"1.5K", note:"Chef Sara Cicolini's offal-forward trattoria blending tradition with flair", photo:"" }
+  { name:"Da Roberto e Loretta", lat:41.8790, lng:12.5058, area:"Esquilino", addr:"Via Saturnia 18-24", tag:"roman", stars:4.5, reviews:"1.4K", note:"Family-run neighborhood gem with outstanding traditional Roman dishes", photo:"https://www.robertoeloretta.com/wp-content/uploads/2023/05/Rob_Lor-127.jpg", web:"https://www.robertoeloretta.com/" },
+  { name:"Santo Palato", lat:41.8815, lng:12.5015, area:"San Giovanni", addr:"Via Gallia 28", tag:"roman", stars:4.3, reviews:"1.5K", note:"Chef Sara Cicolini's offal-forward trattoria blending tradition with flair", photo:"https://www.santopalatoroma.it/wp-content/uploads/2025/06/sp_26.jpg", web:"https://www.santopalatoroma.it/" }
 ];
 
 const AREA_ORDER = ["Centro Storico","Trastevere","Testaccio","Ostiense","Esquilino","San Giovanni"];
@@ -470,6 +499,20 @@ L.polyline(coords, {
 
 const routeBounds = L.latLngBounds(coords);
 map.fitBounds(routeBounds, { padding:[40,40] });
+
+// Distance helper (haversine, returns meters)
+function distM(lat1,lng1,lat2,lng2) {
+  const R=6371000, toR=Math.PI/180;
+  const dLat=(lat2-lat1)*toR, dLng=(lng2-lng1)*toR;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*toR)*Math.cos(lat2*toR)*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+function walkMin(m) { return Math.round(m/80); } // ~80m/min walking pace
+
+function nearbyRests(lat,lng,n) {
+  return RESTAURANTS.map((r,i)=>({r,i,d:distM(lat,lng,r.lat,r.lng)}))
+    .sort((a,b)=>a.d-b.d).slice(0,n);
+}
 
 // Star rating helper
 function starHtml(stars) {
@@ -592,6 +635,22 @@ function renderRouteContent() {
             <a class="nav-btn apple" href="${aUrl}" target="_blank" onclick="event.stopPropagation()">Apple Maps</a>
             <a class="nav-btn google" href="${gUrl}" target="_blank" onclick="event.stopPropagation()">Google Maps</a>
           </div>
+          <div class="nearby-hdr">Nearby Restaurants</div>
+          ${nearbyRests(s.lat,s.lng,3).map(nr => {
+            const mins = walkMin(nr.d);
+            const gWalk = `https://www.google.com/maps/dir/?api=1&origin=${s.lat}%2C${s.lng}&destination=${nr.r.lat}%2C${nr.r.lng}&travelmode=walking`;
+            return `<div class="nearby-rest" onclick="event.stopPropagation();goToRest(${nr.i})">
+              <div class="nr-left">
+                <span class="nr-walk">${mins} min</span>
+                <span class="nr-icon">&#128694;</span>
+              </div>
+              <div class="nr-info">
+                <div class="nr-name">${nr.r.name} ${tagBadge(nr.r.tag)}</div>
+                <div class="nr-meta"><span class="star-fill">${starHtml(nr.r.stars)}</span> ${nr.r.stars} &middot; ${nr.r.addr}</div>
+              </div>
+              <a class="nr-go" href="${gWalk}" target="_blank" onclick="event.stopPropagation()" title="Walking directions">&#8594;</a>
+            </div>`;
+          }).join('')}
         </div>
       </div>
     </div>`;
@@ -735,7 +794,7 @@ function renderRestContent() {
         ${r.photo ? `<img class="rphoto" src="${r.photo}" alt="${r.name}" loading="lazy" onerror="this.style.display='none'">` : ''}
         <div class="rlinks">
           <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.name+' '+r.addr+' Rome')}" target="_blank" onclick="event.stopPropagation()">Google Reviews</a>
-          <a href="https://www.tripadvisor.com/Search?q=${encodeURIComponent(r.name+' Rome')}" target="_blank" onclick="event.stopPropagation()">TripAdvisor</a>
+          ${r.web ? `<a href="${r.web}" target="_blank" onclick="event.stopPropagation()">Website</a>` : ''}
         </div>
         <div class="rest-expand">
           <div class="nav-row">
@@ -809,6 +868,11 @@ function go(i) {
   const pin = document.getElementById(`pin-${i}`);
   if (pin) pin.classList.add('active');
   activeStop = i;
+}
+
+function goToRest(i) {
+  switchTab('restaurants');
+  setTimeout(() => goRest(i), 200);
 }
 
 function goRest(i) {
