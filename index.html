@@ -31,10 +31,24 @@
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
 html, body { height:100%; overflow:hidden; font-family:var(--font); background:var(--bg); color:var(--text); }
 
-.app { display:flex; flex-direction:column; height:100%; height:100dvh; }
+.app {
+  display:flex; flex-direction:column; height:100%; height:100dvh;
+  padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom);
+}
 
 /* === MAP === */
-#map { flex:0 0 48%; min-height:220px; z-index:1; }
+#map { flex:0 0 48%; min-height:220px; z-index:1; position:relative; }
+
+/* Drag handle to resize map/panel */
+.drag-handle {
+  height:14px; display:flex; align-items:center; justify-content:center;
+  background:var(--bg); cursor:ns-resize; touch-action:none;
+  border-bottom:1px solid var(--border); z-index:2; flex-shrink:0;
+}
+.drag-handle::after {
+  content:''; width:36px; height:4px; border-radius:2px;
+  background:var(--text3); opacity:0.5;
+}
 
 /* Leaflet overrides */
 .leaflet-div-icon { background:transparent; border:none; }
@@ -208,8 +222,24 @@ html, body { height:100%; overflow:hidden; font-family:var(--font); background:v
 }
 
 /* Expand/collapse for stop details */
-.stop-expand { display:none; }
-.stop.expanded .stop-expand { display:block; }
+.stop-expand {
+  max-height:0; overflow:hidden; opacity:0;
+  transition:max-height 0.3s ease, opacity 0.2s ease, margin 0.2s ease;
+}
+.stop.expanded .stop-expand {
+  max-height:600px; opacity:1; margin-top:8px;
+}
+
+/* Walk segment between stops */
+.walk-seg {
+  display:flex; align-items:center; gap:8px;
+  padding:4px 20px 4px 37px;
+  font-size:11px; color:var(--text3);
+}
+.walk-seg::before {
+  content:''; width:2px; height:12px; background:var(--border); border-radius:1px; margin-left:14px;
+}
+.walk-seg-text { letter-spacing:0.02em; }
 
 /* Tabs */
 .tabs {
@@ -284,26 +314,34 @@ html, body { height:100%; overflow:hidden; font-family:var(--font); background:v
 .rest .rstars .star-fill { color:#f5c842; letter-spacing:-1px; }
 .rest .rstars .star-val { font-weight:700; color:var(--yellow); }
 .rest .rstars .rev-count { color:var(--text3); }
-.rest .rest-expand { display:none; }
-.rest.expanded .rest-expand { display:block; }
+.rest .rest-expand {
+  max-height:0; overflow:hidden; opacity:0;
+  transition:max-height 0.3s ease, opacity 0.2s ease, margin 0.2s ease;
+}
+.rest.expanded .rest-expand {
+  max-height:400px; opacity:1; margin-top:8px;
+}
+.rest .rnear { font-size:11px; color:var(--blue); margin-top:3px; opacity:0.8; }
 .badge-michelin { background:rgba(196,54,46,0.15); color:#e85b52; border:1px solid rgba(196,54,46,0.3); }
 .badge-seafood { background:rgba(74,158,255,0.12); color:var(--blue); border:1px solid rgba(74,158,255,0.25); }
 .badge-wine { background:rgba(160,100,200,0.12); color:#b580d4; border:1px solid rgba(160,100,200,0.25); }
 .badge-roman { background:rgba(245,166,35,0.12); color:var(--orange); border:1px solid rgba(245,166,35,0.25); }
 .badge-modern { background:rgba(92,212,122,0.12); color:var(--green); border:1px solid rgba(92,212,122,0.25); }
 .badge-deli { background:rgba(245,200,66,0.12); color:#e8c43a; border:1px solid rgba(245,200,66,0.25); }
-.badge-market { background:rgba(245,200,66,0.12); color:#e8c43a; border:1px solid rgba(245,200,66,0.25); }
+.badge-market { background:rgba(168,130,85,0.15); color:#c4a060; border:1px solid rgba(168,130,85,0.3); }
 
-/* Filter bar */
+/* Filter bar - horizontal scroll on small screens */
 .filter-bar {
-  display:flex; gap:6px; padding:8px 20px; flex-wrap:wrap;
-  border-bottom:1px solid var(--border);
+  display:flex; gap:6px; padding:8px 20px; overflow-x:auto;
+  border-bottom:1px solid var(--border); -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
 }
+.filter-bar::-webkit-scrollbar { display:none; }
 .filter-chip {
   font-size:11px; font-weight:700; padding:5px 10px; border-radius:20px;
   cursor:pointer; transition:all 0.15s; border:1px solid var(--border);
   background:var(--card); color:var(--text2); font-family:var(--font);
-  text-transform:uppercase; letter-spacing:0.04em;
+  text-transform:uppercase; letter-spacing:0.04em; flex-shrink:0; white-space:nowrap;
 }
 .filter-chip:active { opacity:0.7; }
 .filter-chip.on { background:var(--accent); color:#fff; border-color:var(--accent); }
@@ -344,6 +382,7 @@ html, body { height:100%; overflow:hidden; font-family:var(--font); background:v
 <body>
 <div class="app">
   <div id="map"></div>
+  <div class="drag-handle" id="dragHandle"></div>
   <div class="panel" id="panel"></div>
 </div>
 
@@ -500,6 +539,37 @@ L.polyline(coords, {
 const routeBounds = L.latLngBounds(coords);
 map.fitBounds(routeBounds, { padding:[40,40] });
 
+// Drag handle for resizing map/panel
+(function() {
+  const handle = document.getElementById('dragHandle');
+  const mapEl = document.getElementById('map');
+  let startY, startH;
+  function onStart(e) {
+    startY = e.touches ? e.touches[0].clientY : e.clientY;
+    startH = mapEl.offsetHeight;
+    document.addEventListener('mousemove', onMove, {passive:false});
+    document.addEventListener('mouseup', onEnd);
+    document.addEventListener('touchmove', onMove, {passive:false});
+    document.addEventListener('touchend', onEnd);
+  }
+  function onMove(e) {
+    e.preventDefault();
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    const h = Math.max(120, Math.min(window.innerHeight * 0.75, startH + (y - startY)));
+    mapEl.style.flex = 'none';
+    mapEl.style.height = h + 'px';
+    map.invalidateSize();
+  }
+  function onEnd() {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onEnd);
+    document.removeEventListener('touchmove', onMove);
+    document.removeEventListener('touchend', onEnd);
+  }
+  handle.addEventListener('mousedown', onStart);
+  handle.addEventListener('touchstart', onStart, {passive:true});
+})();
+
 // Distance helper (haversine, returns meters)
 function distM(lat1,lng1,lat2,lng2) {
   const R=6371000, toR=Math.PI/180;
@@ -512,6 +582,15 @@ function walkMin(m) { return Math.round(m/80); } // ~80m/min walking pace
 function nearbyRests(lat,lng,n) {
   return RESTAURANTS.map((r,i)=>({r,i,d:distM(lat,lng,r.lat,r.lng)}))
     .sort((a,b)=>a.d-b.d).slice(0,n);
+}
+
+function nearestStop(lat,lng) {
+  let best={d:Infinity,s:null};
+  STOPS.forEach(s => {
+    const d = distM(lat,lng,s.lat,s.lng);
+    if (d < best.d) best = {d,s};
+  });
+  return best;
 }
 
 // Star rating helper
@@ -541,7 +620,7 @@ function restPopupHtml(r) {
   const badges = tagBadge(r.tag);
   return `<div class="pc">
     <div class="pc-top"><span class="pc-name">${r.name}</span></div>
-    <div class="pc-meta">${badges}${r.area} &middot; ${r.addr}</div>
+    <div class="pc-meta">${badges}<span style="color:#f5c842">${starHtml(r.stars)}</span> ${r.stars} &middot; ${r.area}</div>
     ${r.note ? `<p class="pc-note">${r.note}</p>` : ''}
     <div class="pc-nav">
       <a class="apple" href="${aUrl}" target="_blank">Apple Maps</a>
@@ -609,11 +688,19 @@ function renderRouteContent() {
   // Schedule header
   h += '<div class="shdr">Schedule &middot; 8 stops &middot; ~3 hrs</div>';
 
-  // Stop cards
+  // Stop cards with walk segments between them
   STOPS.forEach((s, i) => {
     const gUrl = `https://www.google.com/maps/dir/?api=1&destination=${s.lat}%2C${s.lng}&travelmode=walking`;
     const aUrl = `https://maps.apple.com/?daddr=${s.lat},${s.lng}&dirflg=w`;
     const isLast = i === STOPS.length - 1;
+
+    // Walk segment from previous stop
+    if (i > 0) {
+      const prev = STOPS[i-1];
+      const d = distM(prev.lat,prev.lng,s.lat,s.lng);
+      const mins = walkMin(d);
+      h += `<div class="walk-seg"><span class="walk-seg-text">${mins} min walk &middot; ${Math.round(d)}m</span></div>`;
+    }
 
     h += `<div class="stop${s.opt?' opt':''}" data-i="${i}" onclick="go(${i})">
       <div class="stop-left">
@@ -780,6 +867,9 @@ function renderRestContent() {
     const aUrl = `https://maps.apple.com/?daddr=${r.lat},${r.lng}&dirflg=w`;
     const badgeHtml = `<span class="badge badge-${r.tag} clickable" onclick="event.stopPropagation();filterTag('${r.tag}')">${TAG_LABELS[r.tag]}</span>`;
 
+    const ns = nearestStop(r.lat,r.lng);
+    const nearLabel = ns.s ? `${walkMin(ns.d)} min from ${ns.s.name}` : '';
+
     h += `<div class="rest" data-ri="${i}" onclick="goRest(${i})">
       <div class="rnum${r.tag==='michelin'?' michelin':''}">${i+1}</div>
       <div class="rinfo">
@@ -789,14 +879,14 @@ function renderRestContent() {
           <span class="star-val">${r.stars}</span>
           <span class="rev-count">(${r.reviews} reviews)</span>
         </div>
-        <div class="raddr">${r.addr}</div>
-        ${r.note ? `<div class="rnote">${r.note}</div>` : ''}
-        ${r.photo ? `<img class="rphoto" src="${r.photo}" alt="${r.name}" loading="lazy" onerror="this.style.display='none'">` : ''}
-        <div class="rlinks">
-          <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.name+' '+r.addr+' Rome')}" target="_blank" onclick="event.stopPropagation()">Google Reviews</a>
-          ${r.web ? `<a href="${r.web}" target="_blank" onclick="event.stopPropagation()">Website</a>` : ''}
-        </div>
+        <div class="raddr">${r.addr}${nearLabel ? ` &middot; <span class="rnear">${nearLabel}</span>` : ''}</div>
         <div class="rest-expand">
+          ${r.note ? `<div class="rnote">${r.note}</div>` : ''}
+          ${r.photo ? `<img class="rphoto" src="${r.photo}" alt="${r.name}" loading="lazy" onerror="this.style.display='none'">` : ''}
+          <div class="rlinks">
+            <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.name+' '+r.addr+' Rome')}" target="_blank" onclick="event.stopPropagation()">Google Reviews</a>
+            ${r.web ? `<a href="${r.web}" target="_blank" onclick="event.stopPropagation()">Website</a>` : ''}
+          </div>
           <div class="nav-row">
             <a class="nav-btn apple" href="${aUrl}" target="_blank" onclick="event.stopPropagation()">Apple Maps</a>
             <a class="nav-btn google" href="${gUrl}" target="_blank" onclick="event.stopPropagation()">Google Maps</a>
