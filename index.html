@@ -266,6 +266,13 @@ html, body { height:100%; overflow:hidden; font-family:var(--font); background:v
 .rest .rname { font-size:15px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 .rest .raddr { font-size:12px; color:var(--text3); margin-top:2px; }
 .rest .rnote { font-size:13px; color:var(--text2); margin-top:4px; line-height:1.4; }
+.rest .rlinks { display:flex; gap:8px; margin-top:6px; flex-wrap:wrap; }
+.rest .rlinks a {
+  font-size:12px; color:var(--blue); text-decoration:none; font-weight:600;
+  padding:4px 10px; border-radius:6px; background:rgba(74,158,255,0.08);
+  border:1px solid rgba(74,158,255,0.15);
+}
+.rest .rlinks a:active { opacity:0.6; }
 .rest .rest-expand { display:none; }
 .rest.expanded .rest-expand { display:block; }
 .badge-michelin { background:rgba(196,54,46,0.15); color:#e85b52; border:1px solid rgba(196,54,46,0.3); }
@@ -699,6 +706,10 @@ function renderRestContent() {
         <div class="rname">${r.name} ${badgeHtml}</div>
         <div class="raddr">${r.addr}</div>
         ${r.note ? `<div class="rnote">${r.note}</div>` : ''}
+        <div class="rlinks">
+          <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.name+' '+r.addr+' Rome')}" target="_blank" onclick="event.stopPropagation()">Google Reviews</a>
+          <a href="https://www.tripadvisor.com/Search?q=${encodeURIComponent(r.name+' Rome')}" target="_blank" onclick="event.stopPropagation()">TripAdvisor</a>
+        </div>
         <div class="rest-expand">
           <div class="nav-row">
             <a class="nav-btn apple" href="${aUrl}" target="_blank" onclick="event.stopPropagation()">Apple Maps</a>
